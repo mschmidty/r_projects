@@ -1,0 +1,119 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(xml2)
+library(dplyr)
+library(ggplot2)
+
+```
+```{r}
+wd<-'~/Desktop/r/zillow'
+setwd(wd)
+getwd()
+```
+
+
+```{r}
+x<-read_xml("http://www.zillow.com/webservice/GetDeepComps.htm?zws-id=X1-ZWz19e3eor72tn_8uv2u&zpid=117920430&count=25")
+xml_name(x)
+View(xml_children(x))
+
+```
+##Making Variables
+```{r}
+zpid<-xml_find_all(x,"//zpid")
+zpid
+amount<-xml_find_all(x,"//amount")
+amount%>%xml_attr("currency")%>%as.numeric()
+amount
+amount2<-xml_nodes(x,"//amount")
+```
+```{r}
+
+comp<-x%>%xml_find_all("//comp")
+amount<-xml_find_all(comp, "//amount")
+amount2<-xml_text(amount)%>%as.integer
+details<- xml_find_all(comp,"//homedetails")
+details2<- xml_text(details)
+zpid<-xml_find_all(comp,"//zpid")
+zpid2<-xml_text(zpid)%>%as.integer
+zpid2
+```
+
+
+```{r}
+houseData<-data.frame( amount2, details2)
+houseData
+```
+Plot Price
+```{r}
+ggplot(data=houseData, aes(x=factor(0), amount2)) + 
+  geom_boxplot() + geom_jitter(width = 0.2)
+```
+
+
+```{r}
+deepComp<-read_xml("http://www.zillow.com/webservice/GetDeepComps.htm?zws-id=X1-ZWz19e3eor72tn_8uv2u&zpid=117920430&count=25")
+xml_name(deepComp)
+View(xml_children(deepComp))
+```
+
+```{r}
+deep<-deepComp%>%xml_find_all("//comp")
+amountd<-xml_find_all(deep, "//amount")
+amount2d<-xml_text(amountd)%>%as.integer
+detailsd<- xml_find_all(deep,"//homedetails")
+details2d<- xml_text(detailsd)
+zpidd<-xml_find_all(deep,"//zpid")
+zpid2d<-xml_text(zpidd)%>%as.integer
+bathrooms<-xml_find_all(deep, "//bathrooms")
+bathrooms2<-xml_text(bathrooms)%>%as.integer
+bedrooms<-xml_find_all(deep, "//bedrooms")%>%
+  xml_text()%>%as.integer
+lotSize<-xml_find_all(deep, "//lotSizeSqFt")%>%
+  xml_text()%>%as.integer
+amount2d
+```
+
+```{r}
+lotSize
+```
+
+
+```{r}
+deepData<-data.frame( amount2d, bathrooms2, bedrooms, details2d)
+View(deepData)
+write.csv(deepData,file="520houseComps.csv")
+```
+
+```{r}
+ggplot(houseData, aes(x=bedrooms, y=amount2, group=bedrooms)) + 
+  geom_boxplot() + geom_jitter(width = 0.2)
+```
+
+```{r}
+ggplot(deepData, aes(x=bedrooms, y=amount2d, group=bedrooms)) + 
+  geom_boxplot()+ geom_jitter(width = 0.2)
+```
+
+
+```{r}
+deepData$bedrooms<- as.factor(deepData$bedrooms)
+ggplot(deepData, aes(amount2d))+
+  geom_density()
+deepData
+```
+
+
+
+
+
+
+

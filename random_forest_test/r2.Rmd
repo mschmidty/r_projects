@@ -1,0 +1,128 @@
+---
+title: "Random Forest Test 2"
+author: "Mike Schmidt"
+date: "4/20/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Set the Working Directory
+```{r}
+wd <- "/Users/mikes/Desktop/r/random_forest_test"
+setwd(wd)
+getwd()
+```
+
+##Libraries
+```{r}
+library(randomForest)
+library(RCurl)
+library(missForest)
+library(tidyverse)
+```
+
+
+##Get Datasets
+
+###training data
+```{r}
+urlfile<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data'
+download<- getURL(urlfile, ssl.verifypeer=FALSE)
+connection <- textConnection(download)
+train<- read.table(connection, header=FALSE)
+head(train)
+```
+
+
+###Testing Data
+```{r}
+urlfile2<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.test'
+download2<- getURL(urlfile2, ssl.verifypeer=FALSE)
+connection2 <- textConnection(download2)
+test<- read.table(connection2, header=FALSE)
+head(test)
+```
+
+
+##combine the datasets for imputation for and to match levels
+```{r}
+train<-transform(train, id="train")
+test<-transform(test, id="test")
+head(test)
+
+```
+
+##Combing the two datasets
+```{r}
+comb <- bind_rows(train, test)
+```
+
+##clean the combined data
+```{r}
+names<-c(4:6)
+comb[comb=="?"]<-NA
+comb[,names]<-lapply(comb[,names], as.numeric)
+
+
+set.seed(81)
+miss<-prodNA(comb[,names], noNA = 0.2)
+miss.imp<-missForest(miss, xtrue = miss, verbose=TRUE)
+imputed<-miss.imp$ximp ##This is really important, it is the imputed datat that is in a dataframe
+comb[,names]<-imputed
+comb[is.na(comb)] <-"?"
+drops<-c("?")
+comb[,!(names(comb) %in% drops)]
+head(comb)
+```
+
+##Separate the data
+```{r}
+train_final<-filter(comb, id=="train")
+test_final<-filter(comb, id=="test")
+test_final<-select(test_final, V1:V28)
+train_final<-select(train_final, V1:V28)
+```
+
+
+#Run Random Forests
+```{r}
+set.seed(415)
+
+fit<-randomForest(as.factor(V24) ~ V1 + V2 + V4 + V5 + V6 + V7 + V9 + V11 + V12 + V13 +V14 + V15 + V17 + V18 + V21 + V23 ,
+                  data=train_final,
+                  importance=TRUE,
+                  ntree=4000)
+varImpPlot(fit)
+```
+
+
+##Prediction
+```{r}
+Prediction <- predict(fit, test_final)
+prediction_test<- transform(test_final, predict=Prediction)
+prediction_test<-prediction_test %>% 
+  mutate(success=if_else(V24==predict, 1, 0))
+head(prediction_test)
+sum(prediction_test$success)/68*100
+```
+
+
+Getting the probability from random forests instead of binary prediction
+```{r}
+probability <- predict(fit, test_final, type="prob")
+prob1<- probability[,1]
+prob2<- probability[,2]
+prediction_test<- transform(prediction_test, prob1=prob1)
+prediction_test<- transform(prediction_test, prob2=prob2)
+head(prediction_test)
+```
+
+
+```{r}
+write.csv(prediction_test, file="results.csv")
+```

@@ -1,0 +1,138 @@
+---
+title: "RandomForests"
+author: "Mike Schmidt"
+date: "4/20/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Set the Working Directory
+```{r}
+wd <- "/Users/mikes/Desktop/r/random_forest_test"
+setwd(wd)
+getwd()
+```
+
+##Libraries
+```{r}
+library(randomForest)
+library(RCurl)
+library(missForest)
+library(tidyverse)
+```
+
+
+##Get Data set to work with
+Using data from the [UCI Machine Learning Resitory](http://archive.ics.uci.edu/ml/datasets)
+```{r}
+urlfile<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data'
+download<- getURL(urlfile, ssl.verifypeer=FALSE)
+connection <- textConnection(download)
+data<- read.table(connection, header=FALSE)
+data
+```
+##Get Test Data Set
+```{r}
+urlfile2<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.test'
+download2<- getURL(urlfile2, ssl.verifypeer=FALSE)
+connection2 <- textConnection(download2)
+test<- read.table(connection2, header=FALSE)
+test
+```
+
+#Need to clean this dataset
+```{r}
+summary(data)
+```
+##Clean the data 
+```{r}
+names<-c(4:6)
+train<-data
+train[train=="?"]<-NA
+train[,names]<-lapply(train[,names], as.numeric)
+train
+```
+###See Clean Progress
+```{r}
+summary(train)
+```
+
+
+### Use the missForests package to impute NAs
+
+```{r}
+set.seed(81)
+miss<-prodNA(train[,names], noNA = 0.2)
+miss
+miss.imp<-missForest(miss, xtrue = miss, verbose=TRUE)
+head(miss.imp)
+imputed<-miss.imp$ximp ##This is really important, it is the imputed datat that is in a dataframe
+train[,names]<-imputed
+head(train)
+train[is.na(train)] <-"?"
+drops<-c("?")
+train[,!(names(train) %in% drops)]
+train
+```
+
+
+
+##Running Random Forests to try and predict V24 (lesion is surgical)
+Admitedly I don't know what this means. 
+```{r}
+set.seed(415)
+
+##fit<-randomForest(as.factor(V24) ~ V1 + V2 + V4 + V5 + V6 + V7 + V9 + V10 + V11,
+  ##                data=train,
+    ##              importance=TRUE,
+      ##            ntree=1000)
+
+fit<-randomForest(as.factor(V24) ~ V2 + V4 + V5 + V6 + V7 + V9 + V10 + V11 + V12 + V13 +V14 + V15 + V17 + V18,
+                  data=train,
+                  importance=TRUE,
+                  ntree=3000)
+varImpPlot(fit)
+```
+
+
+###Notes on varImpPlot
+**MeanDecreaseAccuracy** = the higher the worse the off the model would be without this variable. From the Titanic Example"*The accuracy one tests to see how worse the model performs without each variable, so a high decrease in accuracy would be expected for very predictive variables.*"
+
+**MeanDecreaseGini** = the higher the more important the variable. 
+
+###Notes on Mean Decrease
+###Notes:
+*needed to convert V4-6 to numberic, used lapply
+*now getting error: "Error in na.fail.default(list(`as.factor(V24)` = c(2L, 2L, 2L, 1L, 2L, : missing values in object".  It is because I have NAs in my data set
+
+
+
+##Clean the test Dataset in the same way we did the train dataset
+```{r}
+names<-c(4:6)
+test[test=="?"]<-NA
+test[,names]<-lapply(test[,names], as.numeric)
+test
+
+set.seed(81)
+test.miss<-prodNA(test[,names], noNA = 0.2)
+test.miss
+test.miss.imp<-missForest(test.miss, xtrue = test.miss, verbose=TRUE)
+head(test.miss.imp)
+test.imputed<-test.miss.imp$ximp ##This is really important, it is the imputed datat that is in a dataframe
+test[,names]<-test.imputed
+head(test)
+test[is.na(test)] <-"?"
+test
+```
+
+##Prediction
+```{r}
+Prediction <- predict(fit, test)
+```
+
+
+
