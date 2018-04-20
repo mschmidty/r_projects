@@ -11,14 +11,14 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Set the Working Directory
+## Set the Working Directory
 ```{r}
 wd <- "/Users/mikes/Desktop/r/random_forest_test"
 setwd(wd)
 getwd()
 ```
 
-##Libraries
+## Libraries
 ```{r}
 library(randomForest)
 library(RCurl)
@@ -27,9 +27,9 @@ library(tidyverse)
 ```
 
 
-##Get Datasets
+## Get Datasets
 
-###training data
+### training data
 ```{r}
 urlfile<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data'
 download<- getURL(urlfile, ssl.verifypeer=FALSE)
@@ -39,7 +39,7 @@ head(train)
 ```
 
 
-###Testing Data
+### Testing Data
 ```{r}
 urlfile2<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.test'
 download2<- getURL(urlfile2, ssl.verifypeer=FALSE)
@@ -49,7 +49,7 @@ head(test)
 ```
 
 
-##combine the datasets for imputation for and to match levels
+## Combine the datasets for imputation for and to match levels
 ```{r}
 train<-transform(train, id="train")
 test<-transform(test, id="test")
@@ -57,12 +57,12 @@ head(test)
 
 ```
 
-##Combing the two datasets
+## Combing the two datasets
 ```{r}
 comb <- bind_rows(train, test)
 ```
 
-##clean the combined data
+## clean the combined data
 ```{r}
 names<-c(4:6)
 comb[comb=="?"]<-NA
@@ -80,7 +80,7 @@ comb[,!(names(comb) %in% drops)]
 head(comb)
 ```
 
-##Separate the data
+## Separate the data
 ```{r}
 train_final<-filter(comb, id=="train")
 test_final<-filter(comb, id=="test")
@@ -89,7 +89,7 @@ train_final<-select(train_final, V1:V28)
 ```
 
 
-#Run Random Forests
+# Run Random Forests
 ```{r}
 set.seed(415)
 
@@ -101,7 +101,7 @@ varImpPlot(fit)
 ```
 
 
-##Prediction
+## Prediction
 ```{r}
 Prediction <- predict(fit, test_final)
 prediction_test<- transform(test_final, predict=Prediction)
@@ -112,7 +112,7 @@ sum(prediction_test$success)/68*100
 ```
 
 
-Getting the probability from random forests instead of binary prediction
+## Getting the probability from random forests instead of binary prediction
 ```{r}
 probability <- predict(fit, test_final, type="prob")
 prob1<- probability[,1]
