@@ -9,14 +9,14 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Set the Working Directory
+## Set the Working Directory
 ```{r}
 wd <- "/Users/mikes/Desktop/r/random_forest_test"
 setwd(wd)
 getwd()
 ```
 
-##Libraries
+## Libraries
 ```{r}
 library(randomForest)
 library(RCurl)
@@ -25,7 +25,7 @@ library(tidyverse)
 ```
 
 
-##Get Data set to work with
+## Get Data set to work with
 Using data from the [UCI Machine Learning Resitory](http://archive.ics.uci.edu/ml/datasets)
 ```{r}
 urlfile<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.data'
@@ -34,7 +34,7 @@ connection <- textConnection(download)
 data<- read.table(connection, header=FALSE)
 data
 ```
-##Get Test Data Set
+## Get Test Data Set
 ```{r}
 urlfile2<-'http://archive.ics.uci.edu/ml/machine-learning-databases/horse-colic/horse-colic.test'
 download2<- getURL(urlfile2, ssl.verifypeer=FALSE)
@@ -43,11 +43,11 @@ test<- read.table(connection2, header=FALSE)
 test
 ```
 
-#Need to clean this dataset
+# Need to clean this dataset
 ```{r}
 summary(data)
 ```
-##Clean the data 
+## Clean the data 
 ```{r}
 names<-c(4:6)
 train<-data
@@ -55,7 +55,7 @@ train[train=="?"]<-NA
 train[,names]<-lapply(train[,names], as.numeric)
 train
 ```
-###See Clean Progress
+### See Clean Progress
 ```{r}
 summary(train)
 ```
@@ -80,7 +80,7 @@ train
 
 
 
-##Running Random Forests to try and predict V24 (lesion is surgical)
+## Running Random Forests to try and predict V24 (lesion is surgical)
 Admitedly I don't know what this means. 
 ```{r}
 set.seed(415)
@@ -98,15 +98,15 @@ varImpPlot(fit)
 ```
 
 
-###Notes on varImpPlot
+### Notes on varImpPlot
+
 **MeanDecreaseAccuracy** = the higher the worse the off the model would be without this variable. From the Titanic Example"*The accuracy one tests to see how worse the model performs without each variable, so a high decrease in accuracy would be expected for very predictive variables.*"
 
 **MeanDecreaseGini** = the higher the more important the variable. 
 
-###Notes on Mean Decrease
-###Notes:
-*needed to convert V4-6 to numberic, used lapply
-*now getting error: "Error in na.fail.default(list(`as.factor(V24)` = c(2L, 2L, 2L, 1L, 2L, : missing values in object".  It is because I have NAs in my data set
+**Notes: on running Random Forests**
+*needed to convert V4-6 to numeric, used lapply and as.numberic.  Could have done thi
+*now getting error: "Error in na.fail.default(list(`as.factor(V24)` = c(2L, 2L, 2L, 1L, 2L, : missing values in object".  It is because I have NAs in my data set.  I imputed (created) the blanks by using the `missForest` library.
 
 
 
