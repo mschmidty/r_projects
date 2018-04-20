@@ -110,7 +110,7 @@ varImpPlot(fit)
 
 
 
-##Clean the test Dataset in the same way we did the train dataset
+## Clean the test Dataset in the same way we did the train dataset
 ```{r}
 names<-c(4:6)
 test[test=="?"]<-NA
@@ -129,7 +129,7 @@ test[is.na(test)] <-"?"
 test
 ```
 
-##Prediction
+## Prediction
 ```{r}
 Prediction <- predict(fit, test)
 ```
