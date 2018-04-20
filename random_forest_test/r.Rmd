@@ -85,11 +85,6 @@ Admitedly I don't know what this means.
 ```{r}
 set.seed(415)
 
-##fit<-randomForest(as.factor(V24) ~ V1 + V2 + V4 + V5 + V6 + V7 + V9 + V10 + V11,
-  ##                data=train,
-    ##              importance=TRUE,
-      ##            ntree=1000)
-
 fit<-randomForest(as.factor(V24) ~ V2 + V4 + V5 + V6 + V7 + V9 + V10 + V11 + V12 + V13 +V14 + V15 + V17 + V18,
                   data=train,
                   importance=TRUE,
